@@ -1,17 +1,22 @@
 
-export async function GetPotholeData(): Promise<PotholeData[] | null> {
+export interface PotholeData {
+  latitude: number;
+  longitude: number;
+  confidence: number;
+  timestamp: string;
+}
+
+export interface SavedPotholeData extends PotholeData {
+  id: number;
+}
+
+export async function GetPotholeData(): Promise<SavedPotholeData[] | null> {
     try {
-        const response = await fetch("http://localhost:8000/detections", {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            }
-        });
+        const response = await fetch("/api/detections", { method: "GET" });
         if (!response.ok) {
             throw new Error("Failed to fetch pothole data");
         }
-        const data = await response.json();
-        console.log("Pothole Data:", data);
+        const data: SavedPotholeData[] = await response.json();
         return data;
     } catch (error) {
         console.error("Error fetching pothole data:", error);
@@ -19,16 +24,9 @@ export async function GetPotholeData(): Promise<PotholeData[] | null> {
     }
 }
 
-interface PotholeData {
-  latitude: Number,
-  longitude: Number,
-  confidence: Number,
-  timestamp: String
-}
-
-export async function SetPotholeData(potholeData: PotholeData) {
+export async function SetPotholeData(potholeData: PotholeData){
     try {
-        const response = await fetch("http://localhost:8000/detections", {
+        const response = await fetch("/api/detections", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -40,11 +38,10 @@ export async function SetPotholeData(potholeData: PotholeData) {
             throw new Error("Failed to send pothole data");
         }
 
-        const data = await response.json();
-        console.log("Pothole Data Sent:", data);
+        const data = await response;
         return data;
     } catch (error){
-        console.error("Error fetching pothole data:", error);
+        console.error("Error sending pothole data:", error);
         return null;
     }
 }

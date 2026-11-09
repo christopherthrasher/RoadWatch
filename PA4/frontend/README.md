@@ -23,9 +23,22 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 **Run production version with docker**:
 
-```bash
+From the PA4 directory, create the shared network and start the backend:
 
+```bash
+docker network create proxy-net
+docker compose up -d --build
 ```
+
+If Docker reports that `proxy-net` already exists, continue with the Compose command.
+
+if running from frontend directory run:
+
+```bash
+docker compose -f docker-compose.yaml up -d --build
+```
+
+Open [http://localhost:3000](http://localhost:3000) to use the website.
 
 ## Learn More
 
