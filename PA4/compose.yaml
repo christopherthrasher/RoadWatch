@@ -1,5 +1,7 @@
+
 services:
   database:
+    container_name: database
     image: postgres:16
     environment:
       POSTGRES_USER: roadwatch
@@ -10,7 +12,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    networks:
+      - proxy-net
   backend:
+    container_name: backend
     build: ./backend
     environment:
       DB_HOST: database
@@ -22,11 +27,29 @@ services:
       - "127.0.0.1:8000:8000"
     depends_on:
       - database
-
+    networks:
+      - proxy-net
+  website:
+    container_name: website
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      BACKEND_API_URL: http://backend:8000
+    ports:
+      - "3000:3000"
+    networks:
+      - proxy-net
   processing:
     build: ./processing
+    networks:
+      - proxy-net
     depends_on:
       - backend
 
 volumes:
   postgres_data:
+
+networks:
+  proxy-net:
+    external: false #make true if trying to connect other docker services in a container to this system
