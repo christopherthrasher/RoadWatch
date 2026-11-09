@@ -19,7 +19,8 @@ const nextConfig: NextConfig = {
         hostname: "localhost" //temp not sure if this is needed but allowing as image pulling from db domain
       }
     ]
-  }
+  },
+  output: "standalone"
 };
 
 export default nextConfig;
