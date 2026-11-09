@@ -9,39 +9,45 @@ from datetime import datetime # To automatically generate the current time
 # '/detections' is the specific route that Vic is building to receive POST requests
 API_URL = "http://backend:8000/detections"
 
+# Wrap the data generation in a function to test it.
+
 # Fake pothole record matching the PostgreSQL database schema
-fake_detection = {
-    "latitude": 39.5296,
-    "longitude": -119.8138,
-    "confidence": 0.92,
-    # Grabs the exact current timeand formats it for the database
-    "timestamp": datetime.now().isoformat()
-}
+def generate_mock_data():
+    return {
+        "latitude": 39.5296,
+        "longitude": -119.8138,
+        "confidence": 0.92,
+        # Grabs the exact current timeand formats it for the database
+        "timestamp": datetime.now().isoformat()
+    }
 
-# Introductory messages to the Docker terminal logs
-print("Processing contatiner started.")
-print(f"Generated dummy data: {json.dumps(fake_detection)}")
-print("Waiting for the backend to come online....")
+if __name__ == "__main__":
+    fake_detection = generate_mock_data()
 
-# An infinite loop that keeps trying to send the data until it succeeds
-# preventing the container from crashing if it boots faster than the backend.
-while True:
-    try:
-        # Attempt to send the fake_detection dictionary as a JSON payload via POST request
-        response = requests.post(API_URL, json=fake_detection)
+    # Introductory messages to the Docker terminal logs
+    print("Processing contatiner started.")
+    print(f"Generated dummy data: {json.dumps(fake_detection)}")
+    print("Waiting for the backend to come online....")
 
-        # HTTP Status 200 (OK) or 201 (Created) means the backend successfully accepted and saved the data
-        if response.status_code in [200, 201]:
-            print("Success! Backend received the detection.")
-            print("Backend Response:", response.json())
-            break # Exit the infinite loop since job is done
+    # An infinite loop that keeps trying to send the data until it succeeds
+    # preventing the container from crashing if it boots faster than the backend.
+    while True:
+        try:
+            # Attempt to send the fake_detection dictionary as a JSON payload via POST request
+            response = requests.post(API_URL, json=fake_detection)
 
-        # If the backend is running but rejects the data (e.g., wrong format)
-        else:
-            print(f"Backend is up but returned an error: {response.status_code}. Retrying in 10 seconds...")
-            time.sleep(10) # Pause the script for 10 seconds before looping through again
+            # HTTP Status 200 (OK) or 201 (Created) means the backend successfully accepted and saved the data
+            if response.status_code in [200, 201]:
+                print("Success! Backend received the detection.")
+                print("Backend Response:", response.json())
+                break # Exit the infinite loop since job is done
 
-    # This specific connection error triggers if the backend container hasn't fully started yet
-    except requests.exceptions.ConnectionError:
-        print("Backend not reachable yet. Retrying in 10 seconds...")
-        time.sleep(10)
+            # If the backend is running but rejects the data (e.g., wrong format)
+            else:
+                print(f"Backend is up but returned an error: {response.status_code}. Retrying in 10 seconds...")
+                time.sleep(10) # Pause the script for 10 seconds before looping through again
+
+        # This specific connection error triggers if the backend container hasn't fully started yet
+        except requests.exceptions.ConnectionError:
+            print("Backend not reachable yet. Retrying in 10 seconds...")
+            time.sleep(10)
