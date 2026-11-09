@@ -1,3 +1,4 @@
+
 services:
   database:
     image: postgres:16
@@ -10,6 +11,24 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+
+  backend:
+    build: ./backend
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_NAME: roadwatch
+      DB_USER: roadwatch
+      DB_PASSWORD: roadwatch_dev
+    depends_on:
+      - database
+
+  processing:
+    build: ./processing
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
