@@ -1,0 +1,18 @@
+services: # Local version using context to build image
+  website:
+    container_name: website
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      BACKEND_API_URL: http://backend:8000
+    expose:
+      - "3000"
+    ports:
+      - "3000:3000"
+    networks:
+      - proxy-net
+
+networks:
+  proxy-net:
+    external: true
