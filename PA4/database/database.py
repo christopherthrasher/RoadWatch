@@ -1,3 +1,4 @@
+# Developed by the RoadWatch team. No external source code integrated.
 
 def insert_detection(cursor, latitude, longitude, confidence, timestamp):
     cursor.execute(
