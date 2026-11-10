@@ -1,3 +1,4 @@
+# Developed by the RoadWatch team. No external source code integrated.
 
 import unittest
 from unittest.mock import Mock
