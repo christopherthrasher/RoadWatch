@@ -1,14 +1,25 @@
 
 import unittest
+from unittest.mock import Mock
 import psycopg2
-
-
-# Check if pothole coordinates are valid
-def valid_coordinates(latitude, longitude):
-    return -90 <= latitude <= 90 and -180 <= longitude <= 180
+from database import insert_detection
 
 
 class TestDatabase(unittest.TestCase):
+
+    # Unit test: Check the database INSERT function
+    def test_insert_detection(self):
+        mock_cursor = Mock()
+
+        insert_detection(mock_cursor, 39.5296, -119.8138, 0.92, "2026-11-04 14:30:00")
+
+        mock_cursor.execute.assert_called_once_with(
+            """
+        INSERT INTO detections (latitude, longitude, confidence, timestamp)
+        VALUES (%s, %s, %s, %s);
+        """,
+            (39.5296, -119.8138, 0.92, "2026-11-04 14:30:00")
+        )
 
     # Integration test: Insert and retrieve a pothole
     def test_insert_and_retrieve(self):
@@ -42,18 +53,6 @@ class TestDatabase(unittest.TestCase):
         finally:
             conn.rollback()
             conn.close()
-
-    # Unit test: Valid coordinates
-    def test_valid_coordinates(self):
-        self.assertTrue(valid_coordinates(39.5296, -119.8138))
-
-    # Unit test: Invalid latitude
-    def test_invalid_latitude(self):
-        self.assertFalse(valid_coordinates(200, -119.8138))
-
-    # Unit test: Invalid longitude
-    def test_invalid_longitude(self):
-        self.assertFalse(valid_coordinates(39.5296, -200))
 
 
 if __name__ == "__main__":
