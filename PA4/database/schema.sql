@@ -3,5 +3,6 @@ CREATE TABLE IF NOT EXISTS detections (
     latitude DOUBLE PRECISION NOT NULL,
     longitude DOUBLE PRECISION NOT NULL,
     confidence DOUBLE PRECISION,
-    timestamp TIMESTAMP
+    timestamp TIMESTAMP,
+    recording_id TEXT
 );

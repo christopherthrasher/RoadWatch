@@ -8,3 +8,4 @@ class DetectionCreate(BaseModel):
     longitude: float = Field(ge=-180, le=180)
     confidence: float
     timestamp: datetime
+    recording_id: str | None = None
