@@ -1,59 +1,87 @@
-# Developed by the RoadWatch team. No external source code integrated.
 
 import unittest
-from unittest.mock import Mock
-import psycopg2
-from database import insert_detection
+import subprocess
 
 
 class TestDatabase(unittest.TestCase):
 
-    # Unit test: Check the database INSERT function
-    def test_insert_detection(self):
-        mock_cursor = Mock()
+    def run_sql(self, sql):
+        return subprocess.run(
+            [
+                "docker", "compose", "exec", "-T", "database",
+                "psql", "-U", "roadwatch", "-d", "roadwatch",
+                "-v", "ON_ERROR_STOP=1", "-t", "-A"
+            ],
+            input=sql,
+            text=True,
+            capture_output=True,
+            check=True
+        ).stdout
 
-        insert_detection(mock_cursor, 39.5296, -119.8138, 0.92, "2026-11-04 14:30:00")
-
-        mock_cursor.execute.assert_called_once_with(
-            """
+    def test_insert_and_retrieve_detection(self):
+        sql = """
+        BEGIN;
         INSERT INTO detections (latitude, longitude, confidence, timestamp)
-        VALUES (%s, %s, %s, %s);
-        """,
-            (39.5296, -119.8138, 0.92, "2026-11-04 14:30:00")
-        )
+        VALUES (39.5296, -119.8138, 0.92, '2026-11-04 14:30:00');
 
-    # Integration test: Insert and retrieve a pothole
-    def test_insert_and_retrieve(self):
-        conn = psycopg2.connect(
-            host="localhost",
-            port=5433,
-            database="roadwatch",
-            user="roadwatch",
-            password="roadwatch_dev"
-        )
+        SELECT latitude, longitude, confidence
+        FROM detections
+        WHERE latitude = 39.5296 AND longitude = -119.8138;
 
-        try:
-            cursor = conn.cursor()
+        ROLLBACK;
+        """
 
-            cursor.execute("""
-                INSERT INTO detections (latitude, longitude, confidence, timestamp)
-                VALUES (39.5296, -119.8138, 0.92, '2026-11-04 14:30:00');
-            """)
+        result = self.run_sql(sql)
+        self.assertIn("39.5296|-119.8138|0.92", result)
 
-            cursor.execute("""
-                SELECT latitude, longitude FROM detections
-                WHERE latitude = 39.5296 AND longitude = -119.8138;
-            """)
+    def test_recording_and_detection_relationship(self):
+        sql = """
+        BEGIN;
 
-            result = cursor.fetchone()
+        INSERT INTO recordings (id, video_path, gps_path)
+        VALUES ('test_drive', 'videos/test.mp4', 'gps/test.gpx');
 
-            self.assertIsNotNone(result)
-            self.assertEqual(result[0], 39.5296)
-            self.assertEqual(result[1], -119.8138)
+        INSERT INTO detections
+            (latitude, longitude, confidence, recording_id)
+        VALUES (39.5296, -119.8138, 0.92, 'test_drive');
 
-        finally:
-            conn.rollback()
-            conn.close()
+        SELECT recording_id
+        FROM detections
+        WHERE recording_id = 'test_drive';
+
+        ROLLBACK;
+        """
+
+        result = self.run_sql(sql)
+        self.assertIn("test_drive", result)
+
+    def test_invalid_recording_id(self):
+        sql = """
+        BEGIN;
+
+        INSERT INTO detections
+            (latitude, longitude, confidence, recording_id)
+        VALUES (39.5296, -119.8138, 0.92, 'nonexistent_test_recording');
+
+        ROLLBACK;
+        """
+
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.run_sql(sql)
+
+    def test_invalid_detection_values(self):
+        sql = """
+        BEGIN;
+
+        INSERT INTO detections
+            (latitude, longitude, confidence)
+        VALUES (100, -119.8138, 1.5);
+
+        ROLLBACK;
+        """
+
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.run_sql(sql)
 
 
 if __name__ == "__main__":
