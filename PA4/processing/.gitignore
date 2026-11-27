@@ -1,2 +1,19 @@
+__pycache__/
 venv/
 .venv/
+# macOS metadata
+.DS_Store
+
+#Raw videos, frames, and training batches
+*.mp4
+*.mov
+*.avi
+*.zip
+train_videos/
+test_videos/
+extracted_frames*/
+roboflow_batch*/
+
+# Local YOLO oututs
+runs/
+yolo*.pt
